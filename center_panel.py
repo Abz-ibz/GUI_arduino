@@ -85,18 +85,16 @@ class CenterPanel(Widget):
                                    font_size='20sp')
         self.add_widget(self.display_label)
 
+    def display_message(self, message):
+        self.update_display_message(message)
+        Clock.schedule_once(lambda dt: self.clear_display_message(), 10)  # Clear message after 10 seconds
+
     def update_display_message(self, message):
         self.display_label.text = message
-
     
     def add_custom_keypad(self):
-<<<<<<< HEAD
         keypad_x, keypad_y = 770, 430
         button_spacing = 93
-=======
-        keypad_x, keypad_y = 770, 480
-        button_spacing = 95
->>>>>>> refs/remotes/origin/main
         keypad_layout = [
             ('1', '2', '3'),
             ('4', '5', '6'),

@@ -12,6 +12,7 @@ class CustomImageButton(ButtonBehavior, Widget):
         self.size_hint = (None, None)
         self.size = size
         self.pos = pos
+        self.background_color = (0, 0, 0, 0)
         self.background_normal = image_normal
         self.background_down = image_down or image_normal
 
