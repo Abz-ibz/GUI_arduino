@@ -90,8 +90,13 @@ class CenterPanel(Widget):
 
     
     def add_custom_keypad(self):
+<<<<<<< HEAD
         keypad_x, keypad_y = 770, 430
         button_spacing = 93
+=======
+        keypad_x, keypad_y = 770, 480
+        button_spacing = 95
+>>>>>>> refs/remotes/origin/main
         keypad_layout = [
             ('1', '2', '3'),
             ('4', '5', '6'),
