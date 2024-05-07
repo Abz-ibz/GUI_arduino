@@ -6,6 +6,7 @@ from kivy.uix.button import Button
 
 import global_state
 from screen_reader import translations
+from face_id.authentication import authenticate
 
 class CustomButton(Button):
     def __init__(self, **kwargs):
@@ -61,6 +62,7 @@ class CenterPanel(Widget):
         self.setup_panel()
         self.add_custom_keypad()
         self.add_display_screen()
+        self.check_system_status()
 
     def setup_panel(self):
         with self.canvas.before:
@@ -74,7 +76,7 @@ class CenterPanel(Widget):
             Color(0.9, 0.9, 0.9, 1)  # Set the background color to light grey
             self.bg_rect = RoundedRectangle(pos=(self.display_x, self.display_y),
                                            size=(self.display_width, self.display_height))
-        self.display_label = Label(pos=(self.display_x, self.display_y + self.display_height - 40),
+        self.display_label = Label(pos=(self.display_x, self.display_y + self.display_height - 70),
                                    size=(self.display_width, 40),
                                    color=(0, 0, 0, 1),
                                    halign='center',
@@ -88,8 +90,8 @@ class CenterPanel(Widget):
 
     
     def add_custom_keypad(self):
-        keypad_x, keypad_y = 770, 480
-        button_spacing = 95,
+        keypad_x, keypad_y = 770, 430
+        button_spacing = 93
         keypad_layout = [
             ('1', '2', '3'),
             ('4', '5', '6'),
@@ -110,18 +112,45 @@ class CenterPanel(Widget):
         self.add_widget(minus_button)
 
 
+    def check_system_status(self):
+        if global_state.system == 1 and global_state.arm == 1 and global_state.alarm_triggered ==1:
+            self.authenticate_user()
+
+    def authenticate_user(self):
+        authenticate(self.face_recognition_callback)
+
+    def face_recognition_callback(self, is_recognised):
+        language = global_state.get_language()
+        if is_recognised:
+            message = translations[language].get('user_recognised', "Translation not found")
+        else:
+            message = translations[language].get('user_not_recognised', "Translation not found")
+        self.update_display_message(message)
+        Clock.schedule_once(lambda dt: self.prompt_for_pin(), 2)
+
     def on_keypad_press(self, instance):
         if instance.text == 'C':
             self.pin_code = ""
             self.update_display_message("")
         elif instance.text == 'Enter':
-            if self.pin_code == "20731":
-                global_state.pin_correct = True
-                self.update_display_message("PIN correct")
-            else:
-                global_state.pin_incorrect = True
-                self.update_display_message("PIN incorrect")
-            self.pin_code = ""
+            self.verify_pin()
         else:
             self.pin_code += instance.text
             self.update_display_message(self.pin_code)
+
+    def verify_pin(self):
+        if self.pin_code == "20731":  # Assume "20731" is the correct PIN
+            global_state.set_alarm(0)  # Disarm the system
+            message = global_state.get_translation(global_state.language, 'pin_correct')
+            self.update_display_message(message)
+            self.pin_attempts = 0  # Reset attempts after correct PIN
+        else:
+            self.pin_attempts += 1
+            if self.pin_attempts >= 3:
+                global_state.set_alarm(1)  # Activate the alarm after 3 failed attempts
+                message = global_state.get_translation(global_state.language, 'alarm_active')
+            else:
+                message = global_state.get_translation(global_state.language, 'pin_incorrect')
+            self.update_display_message(message)
+        self.pin_code = ""  # Reset PIN code after each attempt
+    
